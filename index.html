@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>SIP</title>
+        <script>
+            var progress_text = 'Fortschritt';
+        </script>
+        <style>
+            /*Loading animation. */
+            .loader {
+              border: 16px solid #f3f3f3;
+              border-radius: 50%;
+              border-top: 16px solid #3498db;
+              width: 50px;
+              height: 50px;
+			  margin: auto;
+  			  justify-content: center;
+              -webkit-animation: spin 2s linear infinite; /* Safari */
+              animation: spin 2s linear infinite;
+            }
+            
+            /* Safari */
+            @-webkit-keyframes spin {
+              0% { -webkit-transform: rotate(0deg); }
+              100% { -webkit-transform: rotate(360deg); }
+            }
+            
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+
+            .slidecontainer {
+              width: 100%;
+            }
+            
+            .slider {
+              -webkit-appearance: sliderthumb-horizontal;
+              width: 100%;
+              height: 10px;
+              background: #f0f0f0;
+              box-shadow: 0 0 3pt 1pt gray;
+              border-radius: 5px;
+              outline: none;
+              opacity: 0.7;
+              -webkit-transition: .2s;
+              transition: opacity .2s;
+            }
+            
+            .slider:hover {
+              opacity: 1;
+            }
+            
+            .slider::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              appearance: none;
+              opacity: 1;
+              width: 22px;
+              height: 22px;
+              border-radius: 25px;
+              background: #292929;
+              cursor: pointer;
+            }
+            
+            .slider::-moz-range-thumb {
+              width: 15px;
+              height: 15px;
+              background: #000000;
+              cursor: pointer;
+
+            }
+
+        </style>
+        <style id="white_block_style">
+            .white_block_style {
+              position: absolute;
+              display: none;
+              width: 100%;
+              z-index: 5;
+            }
+        </style>
+
+		<script src="./jsPsych/jspsych.js" type="text/javascript"></script>
+        <script src="https://lfg.aachen-kjp-neuro.de/static/example_study/functions.js"type="text/javascript"></script>
+		<script src="./jsPsych/plugins/jspsych-fullscreen.js" type="text/javascript"></script>
+		<script src="./jsPsych/plugins/jspsych-image-slider-response.js" type="text/javascript"></script>
+        <script src="./jsPsych/plugins/jspsych-survey-likert.js" type="text/javascript"></script>
+        <script src="./jsPsych/plugins/jspsych-survey-html-form.js" type="text/javascript"></script>
+        <script src="./jsPsych/plugins/jspsych-survey-multi-choice.js" type="text/javascript"></script>
+        <script src="./jsPsych/plugins/jspsych-html-slider-response.js" type="text/javascript"></script>
+        <script src="./jsPsych/plugins/jspsych-html-keyboard-response.js" type="text/javascript"></script>
+		<script src="./jsPsych/plugins/jspsych-survey-text.js" type="text/javascript"></script>
+		<script src="./jsPsych/plugins/jspsych-image-keyboard-response.js" type="text/javascript"></script>
+		<script src="./jsPsych/plugins/jspsych-html-button-response.js" type="text/javascript"></script>
+        <script src="./sweetalert/sweetalert2.all.min.js" type="text/javascript"></script>
+        <link href="./sweetalert/sweetalert2.min.css" rel="stylesheet" type="text/css"></link>
+        <script src="./jQuery.js" type="text/javascript"></script>
+
+        <link href="./jsPsych/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <link rel="style" href="./style.css" type="text/css"></link>
+
+        <div class="range">
+            <input type="range" min="0" max="10" value="5" class="slider">
+            <div class="sliderticks">
+            </div>
+        </div>
+    </head>
+
+    <body>
+        <script>
+window.participants_code = window.prompt("Type in Participants ID:");
+const version = window.prompt("Version? (1 or 2)");
+
+function download(data, filename, type) {
+    var file = new Blob([data], {type: type});
+    if (window.navigator.msSaveOrOpenBlob) // IE10+
+        window.navigator.msSaveOrOpenBlob(file, filename);
+    else { // Others
+        var a = document.createElement("a"),
+                url = URL.createObjectURL(file);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);  
+        }, 0); 
+    }
+}
+
+function slider_to_data(){
+	//Turn the 5 sliders to variables in javascript.
+	var anger_slider = document.getElementById("anger");
+	var sadness_slider = document.getElementById("sadness");
+	var shame_slider = document.getElementById("shame");
+	var exclusion_slider = document.getElementById("exclusion");
+	var badIntent_slider = document.getElementById("badIntent");
+
+	//Turn the answers to the 5 sliders to variables in javascript.
+	anger_slider.oninput = function() {window.anger_measure = this.value};
+	sadness_slider.oninput = function() {window.sadness_measure = this.value};
+	shame_slider.oninput = function() {window.shame_measure = this.value};
+	exclusion_slider.oninput = function() {window.exclusion_measure = this.value};
+	badIntent_slider.oninput = function() {window.badIntent_measure = this.value};
+};
+
+function get_subtitle_of_picture(vignette){
+    let subtitle = "<figcaption> <font size=-1> Quelle: ";
+    switch (vignette) {
+        case 4:
+            subtitle += "https://www.flickr.com/photos/labyrinthx-2/8044813365";
+            break;
+        case 8:
+            subtitle += "https://www.flickr.com/photos/goodncrazy/4578745390/";
+            break;
+        case 10:
+            subtitle += "https://www.flickr.com/photos/stevendepolo/4600250860";
+            break;
+        case 11:
+            subtitle += "https://www.flickr.com/photos/pro-juventute/9603145713";
+            break;
+        case 19:
+            subtitle += "https://www.nellis.af.mil/News/Photos/igphoto/2000839461/";
+            break;
+        case 31:
+            subtitle += "https://www.flickr.com/photos/richteabiscuit/876248679";
+            break;
+        
+        default:
+            return "";
+    }
+    return subtitle + "</font> </figcaption>";
+}
+        </script>
+        <script>
+// Variables for browser compatibility.
+var min_chome_version = 55
+var min_ff_version = 60
+var t_error_browser = 8000;
+var nVer = navigator.appVersion;
+var nAgt = navigator.userAgent;
+var browserName  = navigator.appName;
+var fullVersion  = ''+parseFloat(navigator.appVersion);
+var majorVersion = parseInt(navigator.appVersion,10);
+var nameOffset,verOffset,ix;
+var wrong_version_text = 'Leider benutzen Sie einen falschen oder zu alten Browser. Bitte benutzen Sie Firefox oder '+
+'Chrome und aktualisieren Sie diese auf die aktuellste Version wie in unserer E-Mail beschrieben!</p>' +
+'Dann k\u00f6nnen Sie an der Studie teilnehmen.';
+
+var check_browser = {
+    //jsPsych trial embedded to if_check_browser object.
+    type:'html-keyboard-response',
+    response_ends_trial: false,
+    timing_response: t_error_browser,
+    stimulus: wrong_version_text,
+    on_finish: function(){
+        window.location = "http://www.aachen-kjp-neuro.de/?page_id=78";
+    }
+};
+
+var if_check_browser = {
+    timeline: [check_browser],
+    conditional_function: function() {
+        // Chrome
+        if ((verOffset=nAgt.indexOf("Chrome"))!=-1) {
+        browserName = "Chrome";
+        fullVersion = nAgt.substring(verOffset+7);
+        }
+        // Firefox
+        else if ((verOffset=nAgt.indexOf("Firefox"))!=-1) {
+        browserName = "Firefox";
+        fullVersion = nAgt.substring(verOffset+8);
+        }
+        // Others
+        else if ( (nameOffset=nAgt.lastIndexOf(' ')+1) <
+                (verOffset=nAgt.lastIndexOf('/')) )
+        {
+        browserName = nAgt.substring(nameOffset,verOffset);
+        fullVersion = nAgt.substring(verOffset+1);
+        if (browserName.toLowerCase()==browserName.toUpperCase()) {
+        browserName = navigator.appName;
+        }
+        }
+
+        if ((ix=fullVersion.indexOf(";"))!=-1)
+        fullVersion=fullVersion.substring(0,ix);
+        if ((ix=fullVersion.indexOf(" "))!=-1)
+        fullVersion=fullVersion.substring(0,ix);
+        majorVersion = parseInt(''+fullVersion,10);
+
+        if (browserName == "Chrome" && majorVersion >= min_chome_version) {
+            return false;
+        }
+        else if (browserName = "Firefox" && majorVersion >= min_ff_version) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+};
+
+//this is the text that will contain the data in csv format.
+data_text = "participant_id; age; version; Geschwister; Smartphone; Alter; time_elapsed; "
+var think_options = ["Die Person mag andere lieber als mich und<br>behandelt mich deswegen so.", "<br>Das Verhalten der Person hat nichts mit mir zu tun.", "<br>Ich habe mich bestimmt irgendwie falsch verhalten<br>und darum war die Person so zu mir."];
+var yes_to_no_options = ["Ja, auf jeden Fall.", "<br>Ja, wahrscheinlich.", "<br>Vielleicht schon, vielleicht aber auch nicht.", "<br>Nein, wahrscheinlich nicht.", "<br>Nein, sicherlich nicht."];
+var outcome_expectancy_options = ["Es w\u00fcrde auf jeden Fall gut f\u00fcr mich ausgehen.", "<br>Wahrscheinlich w\u00fcrde es gut f\u00fcr mich ausgehen.", "<br>Vielleicht w\u00fcrde es gut, vielleicht aber auch<br>schlecht f\u00fcr mich ausgehen.", "<br>wahrscheinlich w\u00fcrde es schlecht f\u00fcr mich ausgehen.", "<br>Auf jeden Fall w\u00fcrde es schlecht f\u00fcr mich ausgehen."];
+var revenge_options = ["Ja, auf jeden Fall richtig.", "<br>Ja, wahrscheinlich richtig.", "<br>Vielleicht schon richtig, vielleicht aber auch falsch.", "<br>Nein, wahrscheinlich nicht richtig. ", "<br>Nein, sicherlich nicht richtig."];
+var has_siblings = false;
+window.timing = 0;
+var has_smartphone = false;
+var w = screen.width;
+var h = screen.height;
+var vignette_counter = 0;
+
+//texts
+var version_error_text = "There has been a problem with the value of 'version'. It is: ";
+var v1 = 'Stell dir vor, du hast dich f\u00fcr heute mit einer Freundin verabredet. Du wei\u00dft,<br> dass sie ihr Handy bei sich hat und rufst sie an, um zu fragen, wo und wann genau<br> ihr euch trefft. Sie geht aber nicht an ihr Handy.';
+var v2 = 'Stell dir vor, du stehst an der Schlange eines Kiosks, um dir einen Snack zu kaufen.<br> Die Person vor dir ist gerade fertig mit ihrer Bestellung und setzt ihren Rucksack<br> wieder auf. Dabei st\u00f6\u00dft der Rucksack gegen dich.';
+var v3 = 'Stell dir vor, du bist gerade im Sportunterricht und ihr spielt ein Aufw\u00e4rmspiel,<br> bei dem man sich gegenseitig fangen muss. Einer der Mitspieler rempelt dich an.';
+var v4 = 'Stell dir vor, du spielst \u201eElfmeterschie\u00dfen\u201d mit einem Mitsch\u00fcler. Der Mit-<br> sch\u00fcler ben\u00f6tigt nur noch ein Tor, um zu gewinnen. Der n\u00e4chste Schuss ist<br> seiner und er macht ein Tor. Dir f\u00e4llt aber auf, dass er den Ball nicht auf<br> dem Elfmeterpunkt, sondern n\u00e4her vor das Tor gelegt hat.';
+var v5 = 'Stell dir vor, du verabredest dich mit einem M\u00e4dchen aus deiner Klasse, sie sagt<br> dir jedoch kurzfristig ab. Am n\u00e4chsten Tag h\u00f6rst du, dass sie mit einer anderen<br> Klassenkameradin gesehen wurde.';
+var v6 = 'Stell dir vor, du hast einen neuen F\u00fcller, den du sehr magst. Eines Tages kannst<br> du deinen F\u00fcller nicht mehr finden. Einige Zeit sp\u00e4ter siehst du jemanden<br> aus deiner Klasse, wie er mit dem F\u00fcller in der Hand zu einem anderen Mit-<br> sch\u00fcler l\u00e4uft.';
+var v7 = 'Stell dir vor, du musst f\u00fcr ein Schulprojekt eine Gruppenarbeit mit Mitsch\u00fclern<br> machen. Die anderen beteiligen sich jedoch nur sehr wenig, wohingegen du ganz aktiv<br> arbeitest. Nach einiger Zeit f\u00e4llt dir auf, dass zwei der anderen dich komisch<br> angucken und mit den Augen rollen.';
+var v8 = 'Stell dir vor, du bist auf einen Geburtstag eingeladen. Du betrittst den Raum und<br> einige andere sind bereits da und unterhalten sich. Du sagst \u201eHallo\u201d in die Runde,<br> aber niemand reagiert.';
+var v9 = 'Stell dir vor, du hast deiner Schwester/deinem Bruder eines deiner Lieblingsspiel-<br> zeuge geliehen. Als du zu ihr/ihm r\u00fcber gehst, um es dir zur\u00fcck zu holen, siehst du, dass<br> es kaputt ist.';
+var v10 = 'Stell dir vor, du spielst gerade etwas mit deiner Mama und auf einmal rempelt dich<br> dein Bruder/deine Schwester von hinten an und du f\u00e4llst hin.';
+var v11 = 'Stell dir vor, du kommst morgens in die Schule und erf\u00e4hrst, dass jemand aus<br> deiner Klasse ein Foto von dir an mehrere Mitsch\u00fcler weitergeleitet hat.';
+var v12 = '';
+var v13 = 'Stell dir vor, du bist Teil einer WhatsApp Gruppe mit ein paar anderen Leuten aus<br> deiner Klasse. Eines Tages siehst du, dass du aus der Gruppe entfernt wurdest.';
+var v14 = '';
+var v15 = 'Stell dir vor, du bist in deinem Zimmer. Die T\u00fcr ist geschlossen und es h\u00e4ngt<br> ein Schild daran, dass niemand dich st\u00f6ren soll. Trotzdem kommt dein Bruder/deine<br> Schwester mehrmals ohne zu klopfen in dein Zimmer, um dich etwas zu fragen.';
+var v16 = 'Stell dir vor, du darfst einen Film mit deinem Bruder/deiner Schwester schauen. Du<br> gehst noch schnell auf die Toilette und als du wiederkommst siehst du, dass dein<br> Bruder/deine Schwester schon angefangen hat den Film zu schauen.';
+var v17 = 'Stell dir vor, du hast dich f\u00fcr heute mit einer Freundin verabredet. Du schreibst<br> ihr eine WhatsApp Nachricht um zu fragen, wo und wann genau ihr euch trefft. Du kannst<br> sehen, dass sie bei WhatsApp online ist und deine Nachricht gelesen hat, sie antwortet<br>  dir jedoch nicht.';
+var v18 = 'Stell dir vor, du bist shoppen und l\u00e4ufst gerade an einer Gruppe von Leuten vorbei,<br> die du kennst. In diesem Moment stolperst du \u00fcber den Fu\u00df einer Bekannten.';
+var v19 = 'Stell dir vor, du bist gerade in einem Sportkurs und ihr spielt ein Aufw\u00e4rmspiel,<br> bei dem man mit Gewichten hintereinander rennen muss. Einer der Mitspieler rempelt<br> dich an.';
+var v20 = 'Stell dir vor, du spielst \u201eElfmeterschie\u00dfen\u201d mit einem Bekannten. Der Bekannte ben\u00f6-<br> tigt nur noch ein Tor, um zu gewinnen. Der n\u00e4chste Schuss ist seiner und er macht<br> ein Tor. Dir f\u00e4llt aber auf, dass er den Ball nicht auf den Elfmeterpunkt, sondern<br> n\u00e4her vors Tor gelegt hat.';
+var v21 = '';
+var v22 = '';
+var v23 = 'Stell dir vor, du hast sehr lange an einem Bild f\u00fcr ein Kunstprojekt gearbeitet.<br> Dein Sitznachbar hat sein Bild noch nicht fertig. Auf einmal versch\u00fcttet dein<br> Sitznachbar Wasser auf dein Bild, sodass die Farbe \u00fcber das ganze Bild verl\u00e4uft.';
+var v24 = 'Stell dir vor, du musst in einer Gruppe mit anderen zusammen an etwas arbeiten. Die<br> anderen beteiligen sich jedoch nur sehr wenig, w\u00e4hrend du ganz aktiv arbeitest.<br> Nach einiger Zeit f\u00e4llt dir auf, dass zwei der anderen dich komisch angucken und<br> ihre Gesichter verziehen.';
+var v25 = 'Stell dir vor, du l\u00e4ufst in der Schule oder bei der Arbeit \u00fcber den Flur.<br> Zwei Mitsch\u00fcler oder Kolleginnen, die du nur vom Sehen kennst, schauen in deine<br> Richtung und fangen an zu tuscheln.';
+var v26 = 'Stell dir vor, du bekommst mit wie ein Mitsch\u00fcler Einladungskarten auf den Sitz-<br> pl\u00e4tzen verteilt. Als du zu deinem Sitzplatz kommst, siehst du, dass f\u00fcr dich<br> keine Einladungskarte dort liegt.';
+var v27 = 'Stell dir vor, du bekommst mit, dass jemand aus deinem Sportverein alle anderen zu<br> seinem Geburtstag eingeladen hat, nur du wurdest noch nicht eingeladen.';
+var v28 = '';
+var v29 = 'Stell dir vor, es wird ein Gruppenfoto gemacht und du bist auch mit drauf. Sp\u00e4ter<br> siehst du, dass jemand aus deiner Klasse das Foto gepostet hat, du bist aber<br> rausgeschnitten.';
+var v30 = 'Stell dir vor, du stehst an der Kassenschlange im Supermarkt. Die Person hinter dir<br> rempelt dich an. Du drehst dich um und schaust der Person ins Gesicht woraufhin die<br> Person die Hand zu einer Faust ballt und sagt: \u201eGuck nicht so\u201d.';
+var v31 = 'Stell dir vor, du bist auf dem Schulhof und spielst gerade mit einem Spielzeug, das<br> du auf dem Boden gefunden hast. Auf einmal kommt ein Mitsch\u00fcler, schubst dich zu<br> Boden, packt dich am Hals und droht dir, dich zu schlagen, wenn du das Spielzeug<br> nicht sofort zur\u00fcckgibst.';
+
+window.vignettes = []; //Integer array for choosing the vignettes.
+
+var slider_marker_text = '<datalist id="tickmarks"> <option value="0"></option><option value="1"></option><option value="2"></option><option value="3"></option><option value="4"></option><option value="5"><option value="6"></option><option value="7"></option><option value="8"></option><option value="9"></option></option>-<option value="10"></option> </datalist>';
+
+var siblings_trial = { //Trial for asking whether the participant has siblings.
+    type: 'html-button-response',
+    on_start: function() {
+        jsPsych.setProgressBar(0.005);
+    },
+    stimulus: '<img src="./img/SIP.png" width="100px"></img><br><br><p>Hast du Geschwister?</p>',
+    choices: ['Nein', 'Ja'],
+    on_finish: function(data) {
+        data.stimulus = "Geschwister?";
+        if (data.button_pressed == 1) { //Yes
+            has_siblings = true;
+        }
+        else { //No
+            has_siblings = false;
+        }
+        window.timing += (data.rt/1000);
+    },
+};
+
+var smartphone_trial = { //Trial for asking whether the participant has a smartphone.
+    type: 'html-button-response',
+    on_start: function() {
+        jsPsych.setProgressBar(0.01);
+    },
+    stimulus: '<img src="./img/SIP.png" width="100px"></img><br><br><p>Bestizt du ein Handy?</p>',
+    choices: ['Nein', 'Ja'],
+    on_finish: function(data) {
+        data.stimulus = "Handy?";
+        if (data.button_pressed == 1) { //Yes
+            has_smartphone = true;
+        }
+        else {
+            has_smartphone = false;
+        }
+        window.timing += (data.rt/1000);
+    }
+};
+
+var age_trial = { //Trial for asking the age.
+    type: 'survey-html-form',
+    preamble: '<img src="./img/SIP.png" width="100px"></img><br><br><p> Wie alt bist du? </p>',
+    on_start: () => {
+        jsPsych.setProgressBar(0.015);
+    },
+    html: '<p>W\u00e4hle bitte dein Alter: <datalist id="age_datalist"> <option value="8">' + 
+    '<option value="9"> <option value="10"> <option value="11"> <option value="12"> <option value="13">' + 
+    '<option value="14"> <option value="15"> <option value="16"> <option value="17"> <option value="18">' +
+    '<option value="19"> <option value="20"> <option value="21"> <option value="22"></datalist>' +
+    '<input list="age_datalist" name="age" id="age_input"></p>',
+    on_finish: (data) => {
+        data.stimulus = "Alter?";
+        window.age = JSON.parse(data.responses).age;
+        delete data.responses; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+        window.timing += (data.rt/1000);    
+        jsPsych.pauseExperiment();
+        window.vignettes = determine_vignettes(age); //Calling the main thing.
+        jsPsych.resumeExperiment();
+    },
+    post_trial_gap: 500
+};
+
+var loading_trial = { //jsPsych can load the sources of an array, which contains the paths to the sources.
+    on_start: () => {
+        jsPsych.setProgressBar(0.02);
+        var load_images_array = [];
+        for (i = 0; i < window.vignettes.length; i++) {
+            load_images_array[i] = './img/V' + window.vignettes[i] + '.jpg';
+        }
+        jsPsych.pluginAPI.preloadImages(load_images_array, function(){ main_method(age); jsPsych.finishTrial();});
+    },
+    type: 'html-keyboard-response',
+    stimulus: '<img src="./img/SIP.png" width="100px"></img><br><h3>Das Experiment wird geladen. Das könnte ein paar Minuten dauern. Bitte haben Sie Geduld.\n</h3><div class="loader"></div>',
+    choices: jsPsych.NO_KEYS,
+};
+
+var bye_trial = { //This is the last trial.
+    type: 'html-keyboard-response',
+    on_start: function() {
+        jsPsych.setProgressBar(1); //Make the progress bar at the top appear full.
+        jsPsych.data.addProperties({custom_data: data_text+'\n'});
+        //Add the datatext text to every trial object.
+
+        download(data_text, window.participants_code+".csv", "text/csv");
+    },
+    stimulus: '<img src="./img/SIP.png" width="100px"></img><br><img src="./img/thumbs_up.png" width="100px"></img><br>Vielen Dank f\u00fcr deine Teilnahme!<br>Du hast es jetzt geschafft und kannst die Seite schlie\u00dfen.</p><br><br><a href="https://www.ukaachen.de/kliniken-institute/klinik-fuer-psychiatrie-psychosomatik-und-psychotherapie-des-kindes-und-jugendalters/forschung/klinische-neuropsychologie/methoden/messinstrumente/">Bilder Nutzungsrechte</a>',
+    choices: jsPsych.NO_KEYS, //Participant is expected to close the tab and leave the experiment.
+};
+
+var fullscreenExitter = {
+    type: 'fullscreen',
+    fullscreen_mode: false,
+    on_finish: function (data) {
+        delete data.success; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+    }
+};
+
+var enterFullscreen = {
+    on_start: function() {
+    	jsPsych.setProgressBar(0.05);
+    },
+    type: 'fullscreen',
+    fullscreen_mode: true,
+    message: '<img src="./img/SIP.png" width="100px"></img><br>Bitte dr\u00fccken Sie auf "Start" um das Experiment im Vollbildmodus zu starten.<br>',
+    button_label: 'Start',
+    on_finish: function(data) {
+    	delete data.success;
+    }
+};
+
+window.timeline = [if_check_browser, enterFullscreen, siblings_trial, smartphone_trial, age_trial, loading_trial];
+
+jsPsych.init({
+    timeline: window.timeline,
+    show_progress_bar: true,
+});
+
+
+function trial_1_ender() {
+    setTimeout( () => {document.getElementById('trial_1_button').removeAttribute("disabled");}, 1000);
+    //Remove the ban of clicking on the button.
+
+    if(window.anger_measure === 'undefined' || window.sadness_measure === 'undefined' || window.shame_measure === 'undefined' || window.exclusion_measure === 'undefined' || window.badIntent_measure === 'undefined') {
+        //If the subject didn't change at least one of the sliders.
+        Swal.fire(
+            //This is a third party function from the package "sweetalert2".
+            //It is basically a window.alert, but just more presentable.
+            'Bitte beantworte alle Fragen.',
+            'Sie haben nicht f\u00fcr alle Fragen eine Antwort gegeben.',
+            'warning'
+        )
+    }
+    else {
+        jsPsych.finishTrial();
+    }
+    
+}
+
+function determine_vignettes(age) { //Defining the vignettes and their order according to the first two questions.
+    if(age==8 || age==9) {
+        if(has_siblings) {
+            if(version == 1) {
+                return [3, 23, 1, 7, 15, 9, 31];
+            }
+            else if (version == 2) {
+                return [19, 2, 25, 27, 16, 10, 30];
+            }
+            else {
+                //console.log(version_error_text + version);
+            }
+        }
+        else { //no siblings
+            if(version == 1) {
+                return [3, 23, 1, 7, 31];
+            }
+            else if(version == 2) {
+                return [19, 2, 25, 8, 30];
+            }
+            else {
+                //console.log(version_error_text + version);
+            }
+        }
+    }
+    else {
+        if (has_siblings & has_smartphone) {
+            if (version == 1) {
+                return [17, 29, 3, 23, 1, 7, 15, 9, 31];
+            }
+            else if (version == 2) {
+                return [11, 13, 19, 2, 25, 27, 16, 10, 30];
+            }
+            else {
+                //console.log(version_error_text + version);
+            }
+        }
+        if (has_siblings & !has_smartphone) {
+            if (version == 1) {
+                return [3, 23, 6, 1, 7, 24, 15, 9, 31];
+            }
+            else if (version == 2) {
+                return [19, 2, 4, 25, 27, 5, 16, 10, 30];
+            }
+            else {
+                //console.log(version_error_text + version);
+            }
+        }
+        if (!has_siblings & has_smartphone) {
+            if (version == 1) {
+                return [17, 29, 3, 23, 6, 1, 7, 24, 31];
+            }
+            else if (version == 2) {
+                return [11, 13, 19, 2, 4, 25, 8, 5, 30];
+            }
+            else {
+                //console.log(version_error_text + version);
+            }
+        }
+        if (!has_siblings & !has_smartphone) {
+            if (version == 1) {
+                return [3, 23, 6, 20, 1, 7, 24, 26, 31];
+                //return [4,3]; //short array for testing
+            }
+            else if (version == 2) {
+                return [19, 2, 4, 18, 25, 27, 5, 8, 30];
+            }
+            else {
+                //console.log(version_error_text + version);
+            }
+        }
+    }
+}
+
+function main_method(age) {
+    
+    const vignettes_length = window.vignettes.length;
+
+    for (var i = 1; i <= vignettes_length; i++) {
+        data_text = data_text.concat("vignette_" + i + "; how_angry_" + i + "; how_sad_" + i + "; how_ashamed_" + i + "; how_excluded_" + i + "; bad_intent_" + i + "; ");
+        data_text = data_text.concat("interpretation_" + i + "; physical_aggression_" + i + "; relational_aggression_" + i + "; pro_social_" + i + "; revenge_" + i + "; outcome_expectancy_" + i + "; ");
+        data_text = data_text.concat("time_elapsed_" + i + "; ");
+    }
+    data_text = data_text.concat("\n");
+    data_text = data_text.concat(window.participants_code + "; " + age + "; " + version + "; " + (has_siblings ? 1 : 0) + "; " + (has_smartphone ? 1 : 0) + "; " + age + "; " + (window.timing).toFixed(5) + "; ");
+    
+    window.anger_measure='undefined'; //Initialized with character array. These parameters are redefined in slider_to_data.js .
+    window.sadness_measure='undefined'; 
+    window.shame_measure='undefined'; 
+    window.exclusion_measure='undefined'; 
+    window.badIntent_measure='undefined'; 
+    
+    for (i = 0; i < vignettes_length; i++) { //The for loop, the backbone of the scientifical part.
+
+        var vignette_trial_1 = {
+            //The trial, that has 5 sliders at once. This is not allowed by the library jsPsych, so we had to use code injection in a good way.
+            //This trial doesn't generate any useful data, so we subsequently create 5 pseudo-trials that last 1-2 miliseconds which are...
+            //... visually blocked by a white square that is summoned right after this trial. These 5 pseudo-trials correspond to the 5 sliders...
+            //... and bear their data.
+            button_html: '<button id="trial_1_button" class="jspsych-btn" onclick="trial_1_ender()">%choice%</button>',
+            type: 'html-button-response',
+            response_ends_trial: false,
+            slider_width: w/4,
+            choices: ['Weiter'],
+            //HTML code injection to the stimulus attribute.
+            stimulus: slider_marker_text + '<img src="./img/SIP.png" width="100px"></img><br><div style="border: 1px solid black"><img src="./img/V' + vignettes[i] + '.jpg" height=' +(h/3) + 'px></img>' + get_subtitle_of_picture(vignettes[i]) + '<br><b>' + window["v"+vignettes[i]] + '</b></div><br><div id="jspsych-html-slider-response-wrapper" style="margin: 0px auto; text-align:' +
+            ' center;"><div id="jspsych-html-slider-response-stimulus">Wie w\u00fctend w\u00e4rst du, wenn dir das passiert w\u00e4re?</div><div class="jspsych-html-slider-response-container" style="position:relative; margin: 0 auto 3em auto; width:' + (w/4) + 'px;"><input type="range" value="5"' +
+            ' min="0" max="10" step="1" class="slider" id="anger" list="tickmarks"><div><div style="display: inline-block; position: absolute; left:-25%; text-align: center; width: 50%;"><span style="text-align: center; font-size: 80%;"><img src="./img/neutral.png"' +
+            ' width="100px"><br>\u00fcberhaupt nicht w\u00fctend</span></div><div style="display: inline-block; position: absolute; left:75%; text-align: center; width: 50%;"><span style="text-align: center; font-size: 80%;"><img src="./img/Wut.png" width="100px"><br>sehr w\u00fctend</span></div></div></div>' +
+            '</div><br><br><div id="jspsych-html-slider-response-wrapper" style="margin: 40px auto; text-align: center;"><br><br><div id="jspsych-html-slider-response-stimulus">Wie traurig w\u00e4rst du, wenn dir das passiert w\u00e4re?</div><div class="jspsych-html-slider-response-container" style="position:' +
+            'relative; margin: 0 auto 3em auto; width:' + (w/4) + 'px;"><input type="range" value="5" min="0" max="10" step="1" class="slider" id="sadness" list="tickmarks"><div><div style="display: inline-block; position: absolute; left:-25%; text-align: center; width: 50%;">' +
+            '<span style="text-align: center; font-size: 80%;"><img src="./img/neutral.png" width="100px"><br>\u00fcberhaupt nicht traurig</span></div><div style="display: inline-block; position: absolute; left:75%; text-align: center; width: 50%;"><span style="text-align: center; font-size: 80%;"><img ' +
+            'src="./img/traurig.png" width="100px"><br>sehr traurig</span></div></div></div></div><br><br><br><div id="jspsych-html-slider-response-wrapper" style="margin: 25px auto; text-align: center;"><br><br><div id="jspsych-html-slider-response-stimulus">Wie sehr w\u00fcrdest du dich sch\u00e4men, '+
+            'wenn dir das passiert w\u00e4re?</div><div class="jspsych-html-slider-response-container" style="position:relative; margin: 0 auto 3em auto; width:' + (w/4) + 'px;"><input type="range" value="5" min="0" max="10" step="1" class="slider" id="shame" list=' +
+            '"tickmarks"><div><div style="display: inline-block; position: absolute; left:-25%; text-align: center; width: 50%;"><span style="text-align: center; font-size: 80%;"><img src="./img/neutral.png" width="100px"><br>\u00fcberhaupt kein Scham</span></div><div style="display: inline-block; '+
+            'position: absolute; left:75%; text-align: center; width: 50%;"><span style="text-align: center; font-size: 80%;"><img src="./img/Scham.png" width="100px"><br>sehr sch\u00e4men</span></div></div></div></div><br><br><br><div id="jspsych-html-slider-response-wrapper" style="margin: 25px auto;' +
+            'text-align: center;"><br><br><div id="jspsych-html-slider-response-stimulus">Wie sehr zur\u00fcckgewiesen oder ausgeschlossen w\u00fcrdest du dich f\u00fchlen, wenn dir das passiert w\u00e4re?</div><div class="jspsych-html-slider-response-container" style="position:relative; margin: 0 auto 3em ' +
+            'auto; width:' + (w/4) + 'px;"><input type="range" value="5" min="0" max="10" step="1" class="slider" id="exclusion" list="tickmarks"><div><div style="display: inline-block; position: absolute; left:-25%; text-align: center; width: 50%;"><span style="text-align: ' +
+            'center; font-size: 80%;">\u00fcberhaupt nicht ausgeschlossen</span></div><div style="display: inline-block; position: absolute; left:75%; text-align: center; width: 50%;"><span style="text-align: center; font-size: 80%;">sehr ausgeschlossen</span></div></div></div></div><br>'+
+            '<div id="jspsych-html-slider-response-wrapper" style="margin: 0px auto; text-align: center;"><br><br><div id="jspsych-html-slider-response-stimulus">Denkst du, dass die Person eine b\u00f6se Absicht hatte?</div><div class="jspsych-html-slider-response-container" style="position:relative; ' +
+            'margin: 0 auto 3em auto; width:' + (w/4) + 'px;"><input type="range" value="5" min="0" max="10" step="1" class="slider" id="badIntent" list ="tickmarks"><div><div style="display: inline-block; position: absolute; left:-25%; text-align: center; width: 50%;">'+
+            '<span style="text-align: center; font-size: 80%;">sicherlich keine b\u00f6se Absicht</span></div><div style="display: inline-block; position: absolute; left:75%; text-align: center; width: 50%;"><span style="text-align: center; font-size: 80%;">auf jeden Fall b\u00f6se Absicht</span></div></div></div></div>',
+            on_load: function() {                
+				slider_to_data();
+            },
+            on_finish: function(data) {
+                //Block the upcoming 5 pseudo-trials with a huge white square that fills the screen.
+                white_block(true);
+            }
+        
+        };
+
+        //START: Create and queue the pseudo-trials.
+        var angry_slide_trial = {
+            type: 'html-slider-response',
+            stimulus: '',
+            button_label: '',
+            slider_width: 1,
+            on_finish: function(data) {
+                data_text = data_text.concat(window.vignettes[vignette_counter] + "; " + window.anger_measure + "; ");
+            },
+            on_start: function() {
+                setTimeout(() => {jsPsych.finishTrial(), 1});
+            }
+        };
+
+        var sad_slide_trial = {
+            type: 'html-slider-response',
+            stimulus: '',
+            button_label: '',
+            slider_width: 1,
+            on_finish: function(data) {
+                data_text = data_text.concat(window.sadness_measure + "; ");
+            },
+            on_start: function() {
+                setTimeout(() => {jsPsych.finishTrial(), 1});
+            }
+        };
+
+        var ashamed_slide_trial = {
+            type: 'html-slider-response',
+            stimulus: '',
+            button_label: '',
+            slider_width: 1,
+            on_finish: function(data) {
+                data_text = data_text.concat(window.shame_measure + "; ");
+            },
+            on_start: function() {
+                setTimeout(() => {jsPsych.finishTrial()}, 1);
+            }
+        };
+
+        var exclusion_slide_trial = {
+            type: 'html-slider-response',
+            stimulus: '',
+            button_label: '',
+            slider_width: 1,
+            on_finish: function(data) {
+                data_text = data_text.concat(window.exclusion_measure + "; ");
+            },
+            on_start: function() {
+                setTimeout(() => {jsPsych.finishTrial()}, 1);
+            }
+        };
+
+        var badIntent_slide_trial = {
+            type: 'html-slider-response',
+            stimulus: '',
+            button_label: '',
+            slider_width: 1,
+            on_finish: function(data) {
+                data_text = data_text.concat(window.badIntent_measure + "; ");
+            },
+            on_start: function() {
+                setTimeout(() => {jsPsych.finishTrial()}, 1);
+            }
+        };
+        //END: Create and queue the pseudo-trials.
+
+        var interpretation_trial = {
+            //We used code injection for the div object at the top-left of the screen (image and text objects).
+            type: 'survey-multi-choice',
+            button_label: 'Weiter',
+            on_load: function() {
+                setTimeout( ()=> {white_block(false);}, 200); //The white block is gone after 0,2 seconds after this trial is loaded.
+                window.anger_measure='undefined'; 
+                window.sadness_measure='undefined'; 
+                window.shame_measure='undefined'; 
+                window.exclusion_measure='undefined'; 
+                window.badIntent_measure='undefined'; 
+            },
+            on_finish: function(data) {
+                delete data.question_order; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+                interpretation = null;
+                data.responses = data.responses.replace("<br>"," "); //remove "<br>" from data text.
+                if (data.responses.includes(think_options[0].replace("<br>", " "))) {
+                    interpretation = 1;
+                } else if (data.responses.includes(think_options[1].replace("<br>", " "))) {
+                    interpretation = 2;
+                } else if (data.responses.includes(think_options[2].replace("<br>", " "))) {
+                    interpretation = 3;
+                }
+                else {
+                    //console.log("error.");
+                }
+                delete data.responses;
+                data_text = data_text.concat(interpretation + "; ");
+            },
+            questions: [{prompt: '<div style="position: absolute; width: ' + ((w/6)+20) + 'px; top: 40px; left: 10px; z-index: 5; border: 1px solid black"><img src="./img/V' + vignettes[i] + '.jpg" width=' +(w/6) + 'px style="margin: 10px;"></img>' + get_subtitle_of_picture(vignettes[i]) + '<br><p  style="margin: 10px;">' + window["v"+vignettes[i]].replace(/<br>/g,'') + 
+            '</p></div><img src="./img/SIP.png" width="100px"></img><br><b>&#8227 Wenn dir das passiert w\u00e4re, was w\u00fcrdest du denken?</b>', name: 'interpretation', options: think_options, required:true}]
+        };
+
+        var physical_aggression_trial = {
+            //We used code injection for the div object at the top-left of the screen (image and text objects).
+            type: 'survey-multi-choice',
+            button_label: 'Weiter',
+            on_finish: function(data) {
+                delete data.question_order; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+                physical_aggression = null;
+                data.responses = data.responses.replace("<br>"," "); //remove "<br>" from data text.
+                
+                if (data.responses.includes(yes_to_no_options[0].replace("<br>", " "))) {
+                    physical_aggression = 1;
+                } else if (data.responses.includes(yes_to_no_options[1].replace("<br>", " "))) {
+                    physical_aggression = 2;
+                } else if (data.responses.includes(yes_to_no_options[2].replace("<br>", " "))) {
+                    physical_aggression = 3;
+                } else if (data.responses.includes(yes_to_no_options[3].replace("<br>", " "))) {
+                    physical_aggression = 4;
+                } else if (data.responses.includes(yes_to_no_options[4].replace("<br>", " "))) {
+                    physical_aggression = 5;
+                }
+                else {
+                    //console.log("error.");
+                }
+                delete data.responses; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+                data_text = data_text.concat(physical_aggression + "; ");
+            },
+            questions: [{prompt: '<div style="position: absolute; width: ' + ((w/6)+20) + 'px; top: 40px; left: 10px; z-index: 5; border: 1px solid black"><img src="./img/V' + vignettes[i] + '.jpg" width=' +(w/6) + 'px style="margin: 10px;"></img>' + get_subtitle_of_picture(vignettes[i]) + '<br><p  style="margin: 10px;">' + window["v"+vignettes[i]].replace(/<br>/g,'') + 
+            '</p></div><img src="./img/SIP.png" width="100px"></img><br><b>&#8227 Wenn dir das passiert w\u00e4re, w\u00fcrdest du die Person schubsen,<br> schlagen, beschimpfen, blamieren oder auf irgendeine<br> andere Weise versuchen zu verletzen?</p></b>', name: 'physical_aggression', options: yes_to_no_options, required:true}]
+        }
+
+        var relational_aggression_trial = {
+            //We used code injection for the div object at the top-left of the screen (image and text objects).
+            type: 'survey-multi-choice',
+            button_label: 'Weiter',
+            on_finish: function(data) {
+                delete data.question_order;
+                relational_aggression = null;
+                data.responses = data.responses.replace("<br>"," "); //remove "<br>" from data text.
+                if (data.responses.includes(yes_to_no_options[0].replace("<br>", " "))) {
+                    relational_aggression = 1;
+                } else if (data.responses.includes(yes_to_no_options[1].replace("<br>", " "))) {
+                    relational_aggression = 2;
+                } else if (data.responses.includes(yes_to_no_options[2].replace("<br>", " "))) {
+                    relational_aggression = 3;
+                } else if (data.responses.includes(yes_to_no_options[3].replace("<br>", " "))) {
+                    relational_aggression = 4;
+                } else if (data.responses.includes(yes_to_no_options[4].replace("<br>", " "))) {
+                    relational_aggression = 5;
+                }
+                else {
+                    //console.log("error.");
+                }
+                delete data.responses; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+                data_text = data_text.concat(relational_aggression + "; ");
+            },
+            questions: [{prompt: '<div style="position: absolute; width: ' + ((w/6)+20) + 'px; top: 40px; left: 10px; z-index: 5; border: 1px solid black"><img src="./img/V' + vignettes[i] + '.jpg" width=' +(w/6) + 'px style="margin: 10px;"></img>' + get_subtitle_of_picture(vignettes[i]) + '<br><p  style="margin: 10px;">' + window["v"+vignettes[i]].replace(/<br>/g,'') + 
+            '</p></div><img src="./img/SIP.png" width="100px"></img><br><b>&#8227 W\u00fcrdest du hinter dem R\u00fccken der Person reden und<br>versuchen, andere dazu zu kriegen, dass sie nicht mehr<br> mit der Person spielen oder abh\u00e4ngen?</p></b>', name: 'relational_aggression', options: yes_to_no_options, required:true}]
+        };
+
+        var pro_social_trial = {
+            //We used code injection for the div object at the top-left of the screen (image and text objects).
+            type: 'survey-multi-choice',
+            button_label: 'Weiter',
+            on_finish: function(data) {
+                delete data.question_order;
+                pro_social = null;
+                data.responses = data.responses.replace("<br>"," "); //remove "<br>" from data text.
+                
+                if (data.responses.includes(yes_to_no_options[0].replace("<br>", " "))) {
+                    pro_social = 1;
+                } else if (data.responses.includes(yes_to_no_options[1].replace("<br>", " "))) {
+                    pro_social = 2;
+                } else if (data.responses.includes(yes_to_no_options[2].replace("<br>", " "))) {
+                    pro_social = 3;
+                } else if (data.responses.includes(yes_to_no_options[3].replace("<br>", " "))) {
+                    pro_social = 4;
+                } else if (data.responses.includes(yes_to_no_options[4].replace("<br>", " "))) {
+                    pro_social = 5;
+                }
+                else {
+                    //console.log("error.");
+                }
+                delete data.responses; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+                data_text = data_text.concat(pro_social + "; ");
+            },
+            questions: [{prompt: '<div style="position: absolute; width: ' + ((w/6)+20) + 'px; top: 40px; left: 10px; z-index: 5; border: 1px solid black"><img src="./img/V' + vignettes[i] + '.jpg" width=' +(w/6) + 'px style="margin: 10px;"></img>' + get_subtitle_of_picture(vignettes[i]) + '<br><p  style="margin: 10px;">' + window["v"+vignettes[i]].replace(/<br>/g,'') + 
+            '</p></div><img src="./img/SIP.png" width="100px"></img><br><b>&#8227 W\u00fcrdest du versuchen, die Person anzusprechen um<br> friedlich herauszufinden, warum sie so gehandelt hat?</p></b>', name: 'pro_social', options: yes_to_no_options, required:true}]
+        };
+
+        var revenge_trial = {
+            //We used code injection for the div object at the top-left of the screen (image and text objects).
+            type: 'survey-multi-choice',
+            button_label: 'Weiter',
+            on_finish: function(data) {
+                delete data.question_order;
+                revenge = null;
+                data.responses = data.responses.replace("<br>"," "); //remove "<br>" from data text.
+                
+                if (data.responses.includes(revenge_options[0].replace("<br>", " "))) {
+                    revenge = 1;
+                } else if (data.responses.includes(revenge_options[1].replace("<br>", " "))) {
+                    revenge = 2;
+                } else if (data.responses.includes(revenge_options[2].replace("<br>", " "))) {
+                    revenge = 3;
+                } else if (data.responses.includes(revenge_options[3].replace("<br>", " "))) {
+                    revenge = 4;
+                } else if (data.responses.includes(revenge_options[4].replace("<br>", " "))) {
+                    revenge = 5;
+                }
+                else {
+                    //console.log("error.");
+                }
+                delete data.responses; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+                data_text = data_text.concat(revenge + "; ");
+            },
+            questions: [{prompt: '<div style="position: absolute; width: ' + ((w/6)+20) + 'px; top: 40px; left: 10px; z-index: 5; border: 1px solid black"><img src="./img/V' + vignettes[i] + '.jpg" width=' +(w/6) + 'px style="margin: 10px;"></img>' + get_subtitle_of_picture(vignettes[i]) + '<br><p  style="margin: 10px;">' + window["v"+vignettes[i]].replace(/<br>/g,'') + 
+            '</p></div><img src="./img/SIP.png" width="100px"></img><br><b>&#8227 W\u00e4re es richtig, sich an der Person zu<br>r\u00e4chen?</p></b>', name: 'revenge', options: revenge_options, required:true}]
+        };
+
+        var outcome_expectancy_trial = {
+            //We used code injection for the div object at the top-left of the screen (image and text objects).
+            type: 'survey-multi-choice',
+            button_label: 'Weiter',
+            on_finish: function(data) {
+                delete data.question_order;
+                outcome_expectancy = null;
+                data.responses = data.responses.replace("<br>"," "); //remove "<br>" from data text.
+                
+                if (data.responses.includes(outcome_expectancy_options[0].replace("<br>", " "))) {
+                    outcome_expectancy = 1;
+                } else if (data.responses.includes(outcome_expectancy_options[1].replace("<br>", " "))) {
+                    outcome_expectancy = 2;
+                } else if (data.responses.includes(outcome_expectancy_options[2].replace("<br>", " "))) {
+                    outcome_expectancy = 3;
+                } else if (data.responses.includes(outcome_expectancy_options[3].replace("<br>", " "))) {
+                    outcome_expectancy = 4;
+                } else if (data.responses.includes(outcome_expectancy_options[4].replace("<br>", " "))) {
+                    outcome_expectancy = 5;
+                }
+                else {
+                    //console.log("error.");
+                }
+                //console.log(outcome_expectancy);
+                data_text = data_text.concat(outcome_expectancy + "; " + ((data.time_elapsed/1000)-window.timing).toFixed(5) + "; ");
+                delete data.responses; //we delete this attribute of the data object, because there is no column in the database for this attribute.
+                vignette_counter++;
+            },
+            questions: [{prompt: '<div style="position: absolute; width: ' + ((w/6)+20) + 'px; top: 40px; left: 10px; z-index: 5; border: 1px solid black"><img src="./img/V' + vignettes[i] + '.jpg" width=' +(w/6) + 'px style="margin: 10px;"></img>' + get_subtitle_of_picture(vignettes[i]) + '<br><p  style="margin: 10px;">' + window["v"+vignettes[i]].replace(/<br>/g,'') + 
+            '</p></div><img src="./img/SIP.png" width="100px"></img><br><b>&#8227  Wenn du dich an der Person r\u00e4chen w\u00fcrdest, meinst<br>du, dass es gut oder schlecht f\u00fcr dich ausgehen w\u00fcrde?</p></b>', name: 'outcome_expectancy', options: outcome_expectancy_options, required:true}]
+        };
+        //Queue them all to the timeline.
+        jsPsych.addNodeToEndOfTimeline({timeline: [vignette_trial_1, angry_slide_trial, sad_slide_trial, ashamed_slide_trial, exclusion_slide_trial, badIntent_slide_trial, interpretation_trial, physical_aggression_trial, relational_aggression_trial, pro_social_trial, revenge_trial, outcome_expectancy_trial]}, jsPsych.resumeExperiment);
+    
+    }
+    //Queue the bye_trial, meaning that the experiment is over.
+    jsPsych.addNodeToEndOfTimeline({timeline: [fullscreenExitter, bye_trial]}, jsPsych.resumeExperiment);
+}
+        </script>
+        
+        <!--Just a sqaure with a white filling.-->
+        <img id="white_block" src="./img/white_block.png" class="white_block_style">
+
+        <script id="white_block_function">
+          //At the end of every slider trial, we add very short slider trials for each slider, for having a 
+          //good data output (for backend). For hiding that short interval, we show this blank screen between trials.
+          function white_block(signal){ 
+            if(signal) {
+              document.getElementById("white_block").style.display = "block";
+              //White block shown.
+            } else {
+              document.getElementById("white_block").style.display = "none";
+              //White block hidden.
+            }
+          }
+        </script>
+
+    </body>
+</html>
